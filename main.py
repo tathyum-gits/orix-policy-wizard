@@ -93,20 +93,15 @@ if query:
     st.session_state.messages.append({"role": "user", "content": query})
     st.chat_message("user").markdown(query)
 
-    with st.spinner("Searching documents and thinking..."):
+    with st.spinner("Thinking..."):
         matches = search_pinecone(query)
 
-    if not matches:
-        answer = "No relevant documents found."
-    else:
-        context = build_context(matches)
-        answer = ask_gpt4(context, query)
+        if not matches:
+            answer = "No relevant documents found."
+        else:
+            context = build_context(matches)
+            answer = ask_gpt4(context, query)
 
     # Add assistant message to chat history
     st.session_state.messages.append({"role": "assistant", "content": answer})
     st.chat_message("assistant").markdown(answer)
-
-# Clear chat button
-if st.sidebar.button("🗑️ Clear Chat"):
-    st.session_state.messages = []
-    st.experimental_rerun()
