@@ -55,7 +55,7 @@ def build_context(matches):
 
 # Streamlit App
 st.set_page_config(page_title="Orix Policy Wizard", page_icon="🔎")
-st.title("🔎 Orix Policy Wizard Chatbot")
+st.title("🔎 Orix Policy Wizard")
 
 # Initialize chat history
 if "messages" not in st.session_state:
