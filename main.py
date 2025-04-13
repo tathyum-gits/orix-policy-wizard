@@ -4,8 +4,9 @@ from openai import OpenAI
 from pinecone import Pinecone
 from dotenv import load_dotenv
 
-
+# Load environment variables
 load_dotenv()
+
 # Initialize clients
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
@@ -53,31 +54,14 @@ def build_context(matches):
     return context
 
 # Streamlit App
-st.set_page_config(page_title="Mini RAG App", page_icon="🔎")
-st.title("🔎 Mini RAG App")
-st.write("Ask questions and get AI answers based on your document collection!")
+st.set_page_config(page_title="Orix Policy Wizard", page_icon="🔎")
+st.title("🔎 Orix Policy Wizard Chatbot")
 
-# User input
-query = st.text_input("Enter your question:", placeholder="Type your question here...")
+# Initialize chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-if query:
-    with st.spinner("Searching for relevant documents..."):
-        matches = search_pinecone(query)
-
-    if not matches:
-        st.warning("No relevant documents found.")
-    else:
-        context = build_context(matches)
-
-        with st.spinner("Thinking with GPT-4..."):
-            answer = ask_gpt4(context, query)
-
-        st.subheader("🧠 GPT-4 Answer:")
-        st.markdown(answer)
-
-        with st.expander("Show Retrieved Context"):
-            st.text(context)
-
+# Sidebar settings
 st.sidebar.title("Settings")
 st.sidebar.info("Ensure your environment variables (API Keys) are set correctly!")
 
@@ -93,3 +77,36 @@ try:
     st.sidebar.success("Pinecone API connected ✅")
 except Exception as e:
     st.sidebar.error(f"Pinecone Error: {e}")
+
+# Chat display
+for message in st.session_state.messages:
+    if message["role"] == "user":
+        st.chat_message("user").markdown(message["content"])
+    else:
+        st.chat_message("assistant").markdown(message["content"])
+
+# Chat input
+query = st.chat_input("Type your message...")
+
+if query:
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": query})
+    st.chat_message("user").markdown(query)
+
+    with st.spinner("Searching documents and thinking..."):
+        matches = search_pinecone(query)
+
+    if not matches:
+        answer = "No relevant documents found."
+    else:
+        context = build_context(matches)
+        answer = ask_gpt4(context, query)
+
+    # Add assistant message to chat history
+    st.session_state.messages.append({"role": "assistant", "content": answer})
+    st.chat_message("assistant").markdown(answer)
+
+# Clear chat button
+if st.sidebar.button("🗑️ Clear Chat"):
+    st.session_state.messages = []
+    st.experimental_rerun()
